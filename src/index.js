@@ -1,10 +1,10 @@
 import * as PIXI from "pixi.js";
 import { hitTestRectangle, randomPosition } from "./utils";
+import { FallenBunny } from './bunny';
 
 // здесь создается экземпляр App и задаются параметы
 const app = new PIXI.Application({
   background: "#1099bb",
-  // resizeTo: window
   width: 500
 });
 
@@ -13,14 +13,17 @@ let textStyle = new PIXI.TextStyle({
 });
 let score = new PIXI.Text("Score: 0", textStyle);
 let value = 0;
+let lastSpawnTime =  Date.now();
+let spawnInterval = 300;
+
+// Добавляем App на страницу
+document.body.appendChild(app.view);
+
 
 // функция рандомной х координаты для падающего кролика
 function randomBunnyPosition() {
   return app.screen.width / 2 + randomPosition(-250, 225);
 }
-
-// Добавляем App на страницу
-document.body.appendChild(app.view);
 
 //Функция по созданию кроликов
 function createBunny() {
@@ -29,18 +32,26 @@ function createBunny() {
   return bunny;
 }
 
-//Создадим двух зайцев
+//Создадим главного кролика
 const mainBunny = createBunny();
-const fallenBunny = createBunny();
+
 
 //создадим массив падающих кроликов
 const fallenBunnies = [];
-fallenBunnies[0] = fallenBunny;
-console.log(fallenBunnies)
 
-// Сцена - контейнер, которые является корнем графа сцены, доавляем на нее зайцев и счет
+//Функция для создания подающих кроликов
+function cteateFallenBunny() {
+  let fallenBunny = new FallenBunny();
+  fallenBunnies.push(fallenBunny);
+  app.stage.addChild(fallenBunny.fallenBunny);
+  console.log(fallenBunnies);
+}
+
+
+
+
+// Сцена - контейнер, которые является корнем графа сцены, доавляем на нее кроликов и счет
 app.stage.addChild(mainBunny);
-app.stage.addChild(fallenBunnies[0]);
 app.stage.addChild(score);
 
 // Полжение плашки Score
@@ -51,13 +62,13 @@ mainBunny.x = app.screen.width / 2;
 mainBunny.y = 500;
 
 document.addEventListener("keypress", (event) => {
-  if (event.key === "a" || event.key === "ф") {
+  if (event.key === "a" || event.key === "ф" || event.key ==="A" || event.key ==="Ф") {
     if (mainBunny.x > 25) {
       mainBunny.x -= 30;
     } else {
       mainBunny.x = 0;
     }
-  } else if (event.key === "d" || event.key === "в") {
+  } else if (event.key === "d" || event.key === "в" || event.key ==="D" || event.key ==="В") {
     if (mainBunny.x < app.screen.width - 50) {
       mainBunny.x += 30;
     } else {
@@ -66,59 +77,65 @@ document.addEventListener("keypress", (event) => {
   }
 });
 
-// начальное движение и положение падающего кролика
-// fallenBunny.y = 30;
-// fallenBunny.x = randomBunnyPosition();
-// Коллизия
+function updateRabbits(delta) {
+  let resetRabbit = null;
+  for (let i = 0; i < fallenBunnies.length; i++) {
+    let rabbit = fallenBunnies[i];
+    // rabbit.fallenBunny.x = randomBunnyPosition();
+    // rabbit.y = 30;
+    // rabbit.x = randomBunnyPosition();
+    rabbit.update();
+    
+    if (rabbit.needsReset) {
+      resetRabbit = rabbit;
+    }
+    if (rabbit.y >= app.screen.height) {
+      rabbit.needsReset = true;
+      rabbit.resetTime = Date.now();
+    }
+  }
+  if (resetRabbit) {
+    resetRabbit.needsReset = false;
+    resetRabbit.resetTime = 0;
+    resetRabbit.fallenBunny.y = randomBunnyPosition();
+  }
+}
+
+function spawnRabbits() {
+  if (fallenBunnies.length < 5 && Date.now() - lastSpawnTime >= spawnInterval) {
+    cteateFallenBunny();
+    lastSpawnTime = Date.now();
+  }
+}
+
 
 // Listen for animate update
 app.ticker.add((delta) => {
-  //скорость падения
-  
-  // здесь используется функция коллизий, она нужна чтобы запечатлеть момент соприкосновения и увеличить значение scor
 
+  updateRabbits(delta)
+  // здесь используется функция коллизий, она нужна чтобы запечатлеть момент соприкосновения и увеличить значение score
   for (let i = 0; i < fallenBunnies.length; i++) {
-    // fallenBunnies[fallenBunnies.length] = createBunny();
-    app.stage.addChild(fallenBunnies[i])
-    fallenBunnies[i].y += 2;
-    
+    // fallenBunnies[i].y += 2;
+    let rabbit = fallenBunnies[i].fallenBunny;
+    // проверка соприкосновения с любым из кроликов
+    if (hitTestRectangle(rabbit, mainBunny)) {
 
-    //проверка соприкосновения с любым из кроликов
-    if (hitTestRectangle(fallenBunnies[i], mainBunny)) {
-      fallenBunnies[i].y = 30;
-      fallenBunnies[i].x = randomBunnyPosition();
       value++;
       score.text = `Score: ${value}`;
+      rabbit.needsReset = true;
+      rabbit.resetTime = Date.now();
+      rabbit.y = 30;
+      rabbit.x = randomBunnyPosition();
 
-      // ограничение количества кроликов
-      // if (fallenBunnies.length > 4) return;
-
-
-      //добавление кроликов с задержкой после коллизии
-      setTimeout(() => {
-        if (fallenBunnies.length > 4) return;
-        fallenBunnies[fallenBunnies.length] = createBunny();
-
-        console.log(fallenBunnies);
-      }, i*1000)
- 
-
-  
-
-
-    } else if (fallenBunnies[i].y === app.screen.height) {
-      fallenBunnies[i].y = 30;
-      fallenBunnies[i].x = randomBunnyPosition();
+      // updateRabbits(delta)
+    } else if (fallenBunnies[i].fallenBunny.y === app.screen.height) {
+      rabbit.y = 30;
+      rabbit.x = randomBunnyPosition();
     }
   }
-  // if (hitTestRectangle(fallenBunny, mainBunny)) {
-  //   fallenBunny.y = 30;
-  //   fallenBunny.x = randomBunnyPosition();
 
-  //   value++;
-  //   score.text = `Score: ${value}`;
-  // } else if (fallenBunny.y === app.screen.height) {
-  //   fallenBunny.y = 30;
-  //   fallenBunny.x = randomBunnyPosition();
-  // }
+  spawnRabbits()
 });
+
+//Создаем певого падающего кролика
+cteateFallenBunny()
