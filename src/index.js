@@ -13,17 +13,13 @@ let textStyle = new PIXI.TextStyle({
 });
 let score = new PIXI.Text("Score: 0", textStyle);
 let value = 0;
-let lastSpawnTime =  Date.now();
+let lastSpawnTime = 0;
 let spawnInterval = 300;
 
 // Добавляем App на страницу
 document.body.appendChild(app.view);
 
 
-// функция рандомной х координаты для падающего кролика
-function randomBunnyPosition() {
-  return app.screen.width / 2 + randomPosition(-250, 225);
-}
 
 //Функция по созданию кроликов
 function createBunny() {
@@ -41,7 +37,7 @@ const fallenBunnies = [];
 
 //Функция для создания подающих кроликов
 function cteateFallenBunny() {
-  let fallenBunny = new FallenBunny();
+  let fallenBunny = new FallenBunny(app);
   fallenBunnies.push(fallenBunny);
   app.stage.addChild(fallenBunny.fallenBunny);
   console.log(fallenBunnies);
@@ -77,30 +73,52 @@ document.addEventListener("keypress", (event) => {
   }
 });
 
-function updateRabbits(delta) {
+//функция, которая отвечает за обновление кроликов
+function updateRabbits() {
   let resetRabbit = null;
   for (let i = 0; i < fallenBunnies.length; i++) {
     let rabbit = fallenBunnies[i];
-    // rabbit.fallenBunny.x = randomBunnyPosition();
-    // rabbit.y = 30;
-    // rabbit.x = randomBunnyPosition();
-    rabbit.update();
+    rabbit.updateOfState(app);
     
-    if (rabbit.needsReset) {
+
+    if (rabbit.needToReset) {
       resetRabbit = rabbit;
+      // console.log(resetRabbit)
     }
-    if (rabbit.y >= app.screen.height) {
-      rabbit.needsReset = true;
-      rabbit.resetTime = Date.now();
+
+    if (resetRabbit && Date.now() - lastSpawnTime >= spawnInterval) {
+      resetRabbit.needsReset = false;
+      resetRabbit.resetTime = 0;
+      // resetRabbit.canItMove = true
+      resetRabbit.resetPosition(app);
+      lastSpawnTime = Date.now();
     }
   }
-  if (resetRabbit) {
-    resetRabbit.needsReset = false;
-    resetRabbit.resetTime = 0;
-    resetRabbit.fallenBunny.y = randomBunnyPosition();
+
+}
+
+//функция обработки коллизий
+function collisions () {
+  for (let i = 0; i < fallenBunnies.length; i++) {
+    // fallenBunnies[i].y += 2;
+    let rabbit = fallenBunnies[i];
+    // проверка соприкосновения с любым из кроликов
+    if (hitTestRectangle(rabbit.fallenBunny, mainBunny)) {
+
+      value++;
+      score.text = `Score: ${value}`;
+      rabbit.needToReset = true;
+      rabbit.resetTime = Date.now();
+      rabbit.resetPosition(app);
+      spawnRabbits()
+      // rabbit.canItMove = false;
+      console.log(fallenBunnies)
+      // updateRabbits(delta)
+    } 
   }
 }
 
+//функция спауна новых кроликов 
 function spawnRabbits() {
   if (fallenBunnies.length < 5 && Date.now() - lastSpawnTime >= spawnInterval) {
     cteateFallenBunny();
@@ -112,29 +130,9 @@ function spawnRabbits() {
 // Listen for animate update
 app.ticker.add((delta) => {
 
-  updateRabbits(delta)
-  // здесь используется функция коллизий, она нужна чтобы запечатлеть момент соприкосновения и увеличить значение score
-  for (let i = 0; i < fallenBunnies.length; i++) {
-    // fallenBunnies[i].y += 2;
-    let rabbit = fallenBunnies[i].fallenBunny;
-    // проверка соприкосновения с любым из кроликов
-    if (hitTestRectangle(rabbit, mainBunny)) {
-
-      value++;
-      score.text = `Score: ${value}`;
-      rabbit.needsReset = true;
-      rabbit.resetTime = Date.now();
-      rabbit.y = 30;
-      rabbit.x = randomBunnyPosition();
-
-      // updateRabbits(delta)
-    } else if (fallenBunnies[i].fallenBunny.y === app.screen.height) {
-      rabbit.y = 30;
-      rabbit.x = randomBunnyPosition();
-    }
-  }
-
-  spawnRabbits()
+  updateRabbits()
+  // aздесь используется функция коллизий, она нужна чтобы запечатлеть момент соприкосновения и увеличить значение score
+  collisions ()
 });
 
 //Создаем певого падающего кролика

@@ -35281,6 +35281,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.FallenBunny = void 0;
 var PIXI = _interopRequireWildcard(require("pixi.js"));
+var _utils = require("./utils");
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
 function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) { return typeof obj; } : function (obj) { return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }, _typeof(obj); }
@@ -35289,102 +35290,49 @@ function _defineProperties(target, props) { for (var i = 0; i < props.length; i+
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); Object.defineProperty(Constructor, "prototype", { writable: false }); return Constructor; }
 function _toPropertyKey(arg) { var key = _toPrimitive(arg, "string"); return _typeof(key) === "symbol" ? key : String(key); }
 function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input === null) return input; var prim = input[Symbol.toPrimitive]; if (prim !== undefined) { var res = prim.call(input, hint || "default"); if (_typeof(res) !== "object") return res; throw new TypeError("@@toPrimitive must return a primitive value."); } return (hint === "string" ? String : Number)(input); }
+// функция рандомной х координаты для падающего кролика
+function randomBunnyPosition(app) {
+  return app.screen.width / 2 + (0, _utils.randomPosition)(-250, 225);
+}
 var FallenBunny = /*#__PURE__*/function () {
-  function FallenBunny() {
+  function FallenBunny(app) {
     _classCallCheck(this, FallenBunny);
     this.fallenBunny = PIXI.Sprite.from("https://pixijs.com/assets/bunny.png");
-    this.needsReset = false;
+    this.resetPosition(app);
+    this.needToReset = false;
     this.resetTime = 0;
+    this.canItMove = false;
   }
-
-  //метод обновления состояния кролика
   _createClass(FallenBunny, [{
-    key: "update",
-    value: function update(delta) {
-      if (this.needsReset && Date.now() - this.resetTime >= 100) {
-        // this.resetPosition();
-        this.needsReset = false;
+    key: "resetPosition",
+    value: function resetPosition(app) {
+      this.fallenBunny.y = 30;
+      this.fallenBunny.x = randomBunnyPosition(app);
+    }
+  }, {
+    key: "updateOfState",
+    value: function updateOfState(app) {
+      //осановить и переместить кролика наверх, если флаг сброса в позиции true
+      if (this.needsReset && Date.now() - resetTime >= 100) {
+        this.resetPosition(app);
+        this.needToReset = false;
         this.resetTime = 0;
+        // this.canItMove = true;
       }
-      this.fallenBunny.y += 2;
+
+      if (this.fallenBunny.y >= app.screen.height) {
+        this.resetPosition(app);
+        this.needToReset = true;
+        this.resetTime = Date.now();
+        console.log(this);
+      }
+      this.fallenBunny.y += 1;
     }
   }]);
   return FallenBunny;
 }();
 exports.FallenBunny = FallenBunny;
-var rabbits = [];
-var Rabbit = /*#__PURE__*/function () {
-  function Rabbit() {
-    _classCallCheck(this, Rabbit);
-    this.sprite = new PIXI.Sprite(rabbitTexture);
-    this.sprite.anchor.set(0.5);
-    this.sprite.scale.set(0.5);
-    this.resetPosition();
-    this.needsReset = false;
-    this.resetTime = 0;
-  }
-  _createClass(Rabbit, [{
-    key: "resetPosition",
-    value: function resetPosition() {
-      this.sprite.x = Math.random() * app.renderer.width;
-      this.sprite.y = -this.sprite.height;
-    }
-  }, {
-    key: "update",
-    value: function update(delta) {
-      if (this.needsReset && Date.now() - this.resetTime >= 100) {
-        this.resetPosition();
-        this.needsReset = false;
-        this.resetTime = 0;
-      }
-      this.sprite.y += delta * 0.1;
-    }
-  }]);
-  return Rabbit;
-}(); // function createRabbit() {
-//   let rabbit = new Rabbit();
-//   rabbits.push(rabbit);
-//   app.stage.addChild(rabbit.sprite);
-// }
-function updateRabbits(delta) {
-  var resetRabbit = null;
-  for (var i = 0; i < rabbits.length; i++) {
-    var rabbit = rabbits[i];
-    rabbit.update(delta);
-    if (rabbit.needsReset) {
-      resetRabbit = rabbit;
-    }
-  }
-  if (resetRabbit) {
-    resetRabbit.needsReset = false;
-    resetRabbit.resetTime = 0;
-    resetRabbit.resetPosition();
-  }
-}
-function spawnRabbits() {
-  if (rabbits.length < 5 && Date.now() - lastSpawnTime >= spawnInterval) {
-    createRabbit();
-    lastSpawnTime = Date.now();
-  }
-}
-function checkCollisions() {
-  for (var i = 0; i < rabbits.length; i++) {
-    var rabbit = rabbits[i];
-    if (hitTestRectangle(player.sprite, rabbit.sprite)) {
-      score++;
-      rabbit.needsReset = true;
-      rabbit.resetTime = Date.now();
-    }
-  }
-}
-function gameLoop(delta) {
-  updateRabbits(delta);
-  checkCollisions();
-  spawnRabbits();
-}
-
-// app.ticker.add(gameLoop);
-},{"pixi.js":"node_modules/pixi.js/lib/index.mjs"}],"src/index.js":[function(require,module,exports) {
+},{"pixi.js":"node_modules/pixi.js/lib/index.mjs","./utils":"src/utils.js"}],"src/index.js":[function(require,module,exports) {
 "use strict";
 
 var PIXI = _interopRequireWildcard(require("pixi.js"));
@@ -35402,16 +35350,11 @@ var textStyle = new PIXI.TextStyle({
 });
 var score = new PIXI.Text("Score: 0", textStyle);
 var value = 0;
-var lastSpawnTime = Date.now();
+var lastSpawnTime = 0;
 var spawnInterval = 300;
 
 // Добавляем App на страницу
 document.body.appendChild(app.view);
-
-// функция рандомной х координаты для падающего кролика
-function randomBunnyPosition() {
-  return app.screen.width / 2 + (0, _utils.randomPosition)(-250, 225);
-}
 
 //Функция по созданию кроликов
 function createBunny() {
@@ -35428,7 +35371,7 @@ var fallenBunnies = [];
 
 //Функция для создания подающих кроликов
 function cteateFallenBunny() {
-  var fallenBunny = new _bunny.FallenBunny();
+  var fallenBunny = new _bunny.FallenBunny(app);
   fallenBunnies.push(fallenBunny);
   app.stage.addChild(fallenBunny.fallenBunny);
   console.log(fallenBunnies);
@@ -35459,28 +35402,49 @@ document.addEventListener("keypress", function (event) {
     }
   }
 });
-function updateRabbits(delta) {
+
+//функция, которая отвечает за обновление кроликов
+function updateRabbits() {
   var resetRabbit = null;
   for (var i = 0; i < fallenBunnies.length; i++) {
     var rabbit = fallenBunnies[i];
-    // rabbit.fallenBunny.x = randomBunnyPosition();
-    // rabbit.y = 30;
-    // rabbit.x = randomBunnyPosition();
-    rabbit.update();
-    if (rabbit.needsReset) {
+    rabbit.updateOfState(app);
+    if (rabbit.needToReset) {
       resetRabbit = rabbit;
+      // console.log(resetRabbit)
     }
-    if (rabbit.y >= app.screen.height) {
-      rabbit.needsReset = true;
-      rabbit.resetTime = Date.now();
+
+    if (resetRabbit && Date.now() - lastSpawnTime >= spawnInterval) {
+      resetRabbit.needsReset = false;
+      resetRabbit.resetTime = 0;
+      // resetRabbit.canItMove = true
+      resetRabbit.resetPosition(app);
+      lastSpawnTime = Date.now();
     }
-  }
-  if (resetRabbit) {
-    resetRabbit.needsReset = false;
-    resetRabbit.resetTime = 0;
-    resetRabbit.fallenBunny.y = randomBunnyPosition();
   }
 }
+
+//функция обработки коллизий
+function collisions() {
+  for (var i = 0; i < fallenBunnies.length; i++) {
+    // fallenBunnies[i].y += 2;
+    var rabbit = fallenBunnies[i];
+    // проверка соприкосновения с любым из кроликов
+    if ((0, _utils.hitTestRectangle)(rabbit.fallenBunny, mainBunny)) {
+      value++;
+      score.text = "Score: ".concat(value);
+      rabbit.needToReset = true;
+      rabbit.resetTime = Date.now();
+      rabbit.resetPosition(app);
+      spawnRabbits();
+      // rabbit.canItMove = false;
+      console.log(fallenBunnies);
+      // updateRabbits(delta)
+    }
+  }
+}
+
+//функция спауна новых кроликов 
 function spawnRabbits() {
   if (fallenBunnies.length < 5 && Date.now() - lastSpawnTime >= spawnInterval) {
     cteateFallenBunny();
@@ -35490,27 +35454,9 @@ function spawnRabbits() {
 
 // Listen for animate update
 app.ticker.add(function (delta) {
-  updateRabbits(delta);
-  // здесь используется функция коллизий, она нужна чтобы запечатлеть момент соприкосновения и увеличить значение score
-  for (var i = 0; i < fallenBunnies.length; i++) {
-    // fallenBunnies[i].y += 2;
-    var rabbit = fallenBunnies[i].fallenBunny;
-    // проверка соприкосновения с любым из кроликов
-    if ((0, _utils.hitTestRectangle)(rabbit, mainBunny)) {
-      value++;
-      score.text = "Score: ".concat(value);
-      rabbit.needsReset = true;
-      rabbit.resetTime = Date.now();
-      rabbit.y = 30;
-      rabbit.x = randomBunnyPosition();
-
-      // updateRabbits(delta)
-    } else if (fallenBunnies[i].fallenBunny.y === app.screen.height) {
-      rabbit.y = 30;
-      rabbit.x = randomBunnyPosition();
-    }
-  }
-  spawnRabbits();
+  updateRabbits();
+  // aздесь используется функция коллизий, она нужна чтобы запечатлеть момент соприкосновения и увеличить значение score
+  collisions();
 });
 
 //Создаем певого падающего кролика
@@ -35540,7 +35486,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "61964" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "53581" + '/');
   ws.onmessage = function (event) {
     checkedAssets = {};
     assetsToAccept = [];
