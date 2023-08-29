@@ -35315,8 +35315,10 @@ var FallenBunny = /*#__PURE__*/function () {
       if (this.needToReset) {
         this.resetPosition(app);
         this.fallenBunny.y = 30;
+        app.stage.removeChild(this.fallenBunny);
         this.timeOfReset = Date.now();
       } else {
+        app.stage.addChild(this.fallenBunny);
         this.fallenBunny.y += 2;
       }
     }
@@ -35434,6 +35436,7 @@ function collisions() {
       value++;
       score.text = "Score: ".concat(value);
       rabbit.needToReset = true;
+      app.stage.removeChild(rabbit.fallenBunny);
       spawnRabbits();
     }
   }
@@ -35472,7 +35475,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "64248" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "54946" + '/');
   ws.onmessage = function (event) {
     checkedAssets = {};
     assetsToAccept = [];

@@ -116,6 +116,7 @@ function collisions () {
       score.text = `Score: ${value}`;
 
       rabbit.needToReset = true;
+      app.stage.removeChild(rabbit.fallenBunny);
       spawnRabbits()
     } 
   }

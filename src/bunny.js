@@ -24,9 +24,11 @@ export class FallenBunny {
     if (this.needToReset){
       this.resetPosition(app);
       this.fallenBunny.y = 30;
+      app.stage.removeChild(this.fallenBunny)
       this.timeOfReset = Date.now();
 
     } else {
+      app.stage.addChild(this.fallenBunny)
       this.fallenBunny.y +=2;
     }
   }
