@@ -12,7 +12,7 @@ export class FallenBunny {
     this.resetPosition(app);
     this.needToReset = false;
     this.resetTime = 0;
-    this.canItMove = false;
+    // this.canItMove = false;
   }
 
   resetPosition(app) {
@@ -21,21 +21,14 @@ export class FallenBunny {
   }
 
   updateOfState(app) {
-    //осановить и переместить кролика наверх, если флаг сброса в позиции true
-    if (this.needsReset && Date.now() - resetTime >= 100) {
+    if (this.needToReset){
       this.resetPosition(app);
-      this.needToReset = false;
-      this.resetTime = 0;
-      // this.canItMove = true;
-    }
-    if (this.fallenBunny.y >= app.screen.height) {
-      this.resetPosition(app);
-      this.needToReset = true;
-      this.resetTime = Date.now();
-      console.log(this)
-    }
+      this.fallenBunny.y = 30;
+      this.timeOfReset = Date.now();
 
-    this.fallenBunny.y +=1
-
+    } else {
+      this.fallenBunny.y +=2;
+    }
   }
+
 }

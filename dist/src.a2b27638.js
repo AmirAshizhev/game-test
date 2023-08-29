@@ -35301,7 +35301,7 @@ var FallenBunny = /*#__PURE__*/function () {
     this.resetPosition(app);
     this.needToReset = false;
     this.resetTime = 0;
-    this.canItMove = false;
+    // this.canItMove = false;
   }
   _createClass(FallenBunny, [{
     key: "resetPosition",
@@ -35312,21 +35312,13 @@ var FallenBunny = /*#__PURE__*/function () {
   }, {
     key: "updateOfState",
     value: function updateOfState(app) {
-      //осановить и переместить кролика наверх, если флаг сброса в позиции true
-      if (this.needsReset && Date.now() - resetTime >= 100) {
+      if (this.needToReset) {
         this.resetPosition(app);
-        this.needToReset = false;
-        this.resetTime = 0;
-        // this.canItMove = true;
+        this.fallenBunny.y = 30;
+        this.timeOfReset = Date.now();
+      } else {
+        this.fallenBunny.y += 2;
       }
-
-      if (this.fallenBunny.y >= app.screen.height) {
-        this.resetPosition(app);
-        this.needToReset = true;
-        this.resetTime = Date.now();
-        console.log(this);
-      }
-      this.fallenBunny.y += 1;
     }
   }]);
   return FallenBunny;
@@ -35350,7 +35342,7 @@ var textStyle = new PIXI.TextStyle({
 });
 var score = new PIXI.Text("Score: 0", textStyle);
 var value = 0;
-var lastSpawnTime = 0;
+var lastSpawnTime = Date.now();
 var spawnInterval = 300;
 
 // Добавляем App на страницу
@@ -35405,22 +35397,30 @@ document.addEventListener("keypress", function (event) {
 
 //функция, которая отвечает за обновление кроликов
 function updateRabbits() {
-  var resetRabbit = null;
   for (var i = 0; i < fallenBunnies.length; i++) {
     var rabbit = fallenBunnies[i];
     rabbit.updateOfState(app);
-    if (rabbit.needToReset) {
-      resetRabbit = rabbit;
-      // console.log(resetRabbit)
+    if (rabbit.fallenBunny.y >= app.screen.height) {
+      rabbit.needToReset = true; // достигший дна кролик улетает наверх и не двигается
     }
 
-    if (resetRabbit && Date.now() - lastSpawnTime >= spawnInterval) {
-      resetRabbit.needsReset = false;
-      resetRabbit.resetTime = 0;
-      // resetRabbit.canItMove = true
-      resetRabbit.resetPosition(app);
+    // проверка, чтобы опустить флаг сброса
+    if (rabbit.needToReset && Date.now() - lastSpawnTime >= spawnInterval) {
+      rabbit.needToReset = false;
       lastSpawnTime = Date.now();
     }
+    // по идее, теперь мне не нужно в колиизии что-то менять, кроме флага т.к updateBunnies () сама проверяет, 
+    //можно ли выпускать следующего кролика
+  }
+}
+
+//функция спауна новых кроликов 
+function spawnRabbits() {
+  if (fallenBunnies.length < 5) {
+    var bunny = new _bunny.FallenBunny(app);
+    fallenBunnies.push(bunny);
+    bunny.needToReset = true; // мы ставим новосозданному кролику флаг, что он должен быть наверху и что он дожен должен ждать (а нужна ли эта строка? )
+    app.stage.addChild(bunny.fallenBunny);
   }
 }
 
@@ -35434,28 +35434,14 @@ function collisions() {
       value++;
       score.text = "Score: ".concat(value);
       rabbit.needToReset = true;
-      rabbit.resetTime = Date.now();
-      rabbit.resetPosition(app);
       spawnRabbits();
-      // rabbit.canItMove = false;
-      console.log(fallenBunnies);
-      // updateRabbits(delta)
     }
-  }
-}
-
-//функция спауна новых кроликов 
-function spawnRabbits() {
-  if (fallenBunnies.length < 5 && Date.now() - lastSpawnTime >= spawnInterval) {
-    cteateFallenBunny();
-    lastSpawnTime = Date.now();
   }
 }
 
 // Listen for animate update
 app.ticker.add(function (delta) {
   updateRabbits();
-  // aздесь используется функция коллизий, она нужна чтобы запечатлеть момент соприкосновения и увеличить значение score
   collisions();
 });
 
@@ -35486,7 +35472,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "53581" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "64248" + '/');
   ws.onmessage = function (event) {
     checkedAssets = {};
     assetsToAccept = [];
